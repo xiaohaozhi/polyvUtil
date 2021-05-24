@@ -1,6 +1,5 @@
 
 const fs = require('fs');
-let wasmfilename = 'v1102.wasm';
 
 var location = true;
 var Module = {};
@@ -55,19 +54,22 @@ var importObject = {
     }
 };
 
-var wasmobject = new WebAssembly.Instance(new WebAssembly.Module(new Uint8Array(fs.readFileSync(wasmfilename))), importObject);
+var wasmobject = new WebAssembly.Instance(new WebAssembly.Module(new Uint8Array(fs.readFileSync('v1102.wasm'))), importObject);
 
-var token = '120482';
-Module[token] = token.length;
-token = new Uint8Array(new Buffer.from(token, 'utf8'));
-var key = new Uint8Array([40, 145, 38, 3, 225, 41, 201, 166, 235, 156, 29, 189, 75, 235, 108, 241, 217, 254, 196, 140, 97, 45, 5, 248, 227, 82, 192, 195, 93, 123, 248, 216]);
-var iv = new Uint8Array([247, 163, 249, 36, 46, 50, 85, 183, 172, 158, 25, 145, 112, 203, 43, 25]);
-var ts = new Uint8Array(fs.readFileSync('v11_1.ts'));
+function decrypt(token, key, iv, seedconst, path) {
+    Module[token] = token.length;
+    token = new Uint8Array(new Buffer.from(token, 'utf8'));
+    key = new Uint8Array(new Buffer.from(key, 'hex'));
+    iv = new Uint8Array(new Buffer.from(iv, 'hex'));
+    seedconst = parseInt(seedconst);
+    var ts = new Uint8Array(fs.readFileSync(path));
+    var wasmtoken = setbyte(token, wasmobject);
+    var wasmkey = setbyte(key, wasmobject);
+    var wasmts = setbyte(ts, wasmobject);
+    var wasmiv = setbyte(iv, wasmobject);
+    var outptr = wasmobject.exports.f.apply(null, [wasmts.byteOffset, wasmiv.byteOffset, wasmts.length, wasmkey.byteOffset, wasmkey.length, seedconst, wasmtoken.byteOffset, wasmtoken.length]);
+    var outbuff = new Uint8Array(wasmMemory.buffer, outptr , wasmts.length);
+    fs.writeFileSync(path, outbuff);
+}
 
-var wasmtoken = setbyte(token, wasmobject);
-var wasmkey = setbyte(key, wasmobject);
-var wasmts = setbyte(ts, wasmobject);
-var wasmiv = setbyte(iv, wasmobject);
-var outptr = wasmobject.exports.f.apply(null, [wasmts.byteOffset, wasmiv.byteOffset, wasmts.length, wasmkey.byteOffset, wasmkey.length, 143, wasmtoken.byteOffset, wasmtoken.length]);
-var outbuff = new Uint8Array(wasmMemory.buffer, outptr , wasmts.length);
-fs.writeFileSync('v11_2.ts', outbuff);
+decrypt(process.argv[2], process.argv[3], process.argv[4], process.argv[5], process.argv[6]);
