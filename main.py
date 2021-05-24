@@ -17,7 +17,7 @@ def main():
     if os.path.exists(downloadpath):
         shutil.rmtree(downloadpath)
     os.makedirs(downloadpath)
-    vid = '9b52ce99c4d51214b63dfb4166fddddc'
+    vid = '9b52ce99c4d51214b63dfb4166fddddc'  # 设置自己的vid与token
     token = ''
     if '_' in vid:
         vid = vid.split('_')[0] + '_' + vid[0]
